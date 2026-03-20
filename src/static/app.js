@@ -611,6 +611,16 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-section">
+        <button class="share-button" data-activity="${name}" aria-label="Share this activity">
+          📤 Share
+        </button>
+        <div class="share-options hidden">
+          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer" aria-label="Share on X (Twitter)">𝕏 X (Twitter)</a>
+          <a class="share-option share-facebook" href="#" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">📘 Facebook</a>
+          <button class="share-option share-copy" aria-label="Copy link">🔗 Copy Link</button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -629,8 +639,55 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Add share button functionality
+    const shareButton = activityCard.querySelector(".share-button");
+    const shareOptions = activityCard.querySelector(".share-options");
+    const shareUrl = `${window.location.href.split("?")[0]}?activity=${encodeURIComponent(name)}`;
+    const shareText = `Check out "${name}" at Mergington High School! ${details.description}`;
+
+    shareButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (navigator.share) {
+        navigator.share({ title: name, text: shareText, url: shareUrl });
+      } else {
+        // Toggle dropdown
+        const isVisible = !shareOptions.classList.contains("hidden");
+        // Close all other open share dropdowns
+        document.querySelectorAll(".share-options").forEach((el) => el.classList.add("hidden"));
+        if (!isVisible) {
+          shareOptions.classList.remove("hidden");
+          // Set platform URLs
+          const twitterLink = shareOptions.querySelector(".share-twitter");
+          const facebookLink = shareOptions.querySelector(".share-facebook");
+          twitterLink.href = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+          facebookLink.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        }
+      }
+    });
+
+    const copyButton = activityCard.querySelector(".share-copy");
+    copyButton.addEventListener("click", () => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        copyButton.textContent = "✅ Copied!";
+        setTimeout(() => {
+          copyButton.textContent = "🔗 Copy Link";
+          shareOptions.classList.add("hidden");
+        }, 1500);
+      }).catch(() => {
+        copyButton.textContent = "❌ Copy failed";
+        setTimeout(() => {
+          copyButton.textContent = "🔗 Copy Link";
+        }, 1500);
+      });
+    });
+
     activitiesList.appendChild(activityCard);
   }
+
+  // Close share dropdowns when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".share-options").forEach((el) => el.classList.add("hidden"));
+  });
 
   // Event listeners for search and filter
   searchInput.addEventListener("input", (event) => {
